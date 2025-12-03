@@ -1,4 +1,3 @@
-
 fun main() {
     fun checkIfSubstringIsRepeatedTwice(string: String): Boolean {
         // If the length of the string is uneven, it can't consist of two equal parts.
