@@ -74,3 +74,11 @@ fun CharSequence.splitIgnoreEmpty(vararg delimiters: String): List<String> {
  */
 fun String.permute(result: String = ""): List<String> =
     if (isEmpty()) listOf(result) else flatMapIndexed { i, c -> removeRange(i, i + 1).permute(result + c) }.distinct()
+
+fun List<String>.toListOfLongRange(delimiter: String = "-"): List<LongRange> {
+    return this.map{
+        val firstNumber = it.substringBefore(delimiter).toLong()
+        val lastNumber = it.substringAfter(delimiter).toLong()
+        firstNumber.rangeTo(lastNumber)
+    }
+}

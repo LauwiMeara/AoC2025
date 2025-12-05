@@ -1,10 +1,6 @@
 fun main() {
     fun getFreshRanges(input: List<String>): List<LongRange> {
-        return input.first().split(System.lineSeparator()).map{
-            val firstNumber = it.substringBefore('-').toLong()
-            val lastNumber = it.substringAfter('-').toLong()
-            firstNumber.rangeTo(lastNumber)
-        }
+        return input.first().split(System.lineSeparator()).toListOfLongRange()
     }
 
     fun getIngredients(input:List<String>): List<Long> {

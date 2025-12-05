@@ -40,11 +40,7 @@ fun main() {
         return sum
     }
 
-    val input = readInputSplitByDelimiter("Day02", ",").map{
-        val firstNumber = it.substringBefore('-').toLong()
-        val lastNumber = it.substringAfter('-').toLong()
-        firstNumber.rangeTo(lastNumber)
-    }
+    val input = readInputSplitByDelimiter("Day02", ",").toListOfLongRange()
     part1(input).println()
     part2(input).println()
 }
