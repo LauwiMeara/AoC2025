@@ -75,6 +75,9 @@ fun CharSequence.splitIgnoreEmpty(vararg delimiters: String): List<String> {
 fun String.permute(result: String = ""): List<String> =
     if (isEmpty()) listOf(result) else flatMapIndexed { i, c -> removeRange(i, i + 1).permute(result + c) }.distinct()
 
+/**
+ * Transforms a list of strings into a list of LongRange. Warning: does not check if the string is a valid Long.
+ */
 fun List<String>.toListOfLongRange(delimiter: String = "-"): List<LongRange> {
     return this.map{
         val firstNumber = it.substringBefore(delimiter).toLong()
