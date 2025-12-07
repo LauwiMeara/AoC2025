@@ -9,7 +9,7 @@ fun main() {
         }
     }
 
-    fun beam(input: List<MutableList<String>>) {
+    fun beam(input: List<MutableList<String>>, panel: BeamPanel? = null) {
         for (x in input.indices) {
             for (y in input[x].indices) {
                 if ((input[x][y] == START || input[x][y] == BEAM) &&
@@ -29,11 +29,23 @@ fun main() {
                     }
                 }
             }
+            panel?.repaint(input)
         }
     }
 
-    fun part1(input: List<MutableList<String>>): Long {
-        beam(input)
+    fun part1(input: List<MutableList<String>>, visualize: Boolean = false): Long {
+        val panel = if (visualize) BeamPanel(input) else null
+        if (panel != null) {
+            createFrame(
+                panel = panel,
+                input = input,
+                pointSize = BEAM_POINT_SIZE,
+                title = "Advent of Code, Day 7: Laboratories ")
+            Thread.sleep(5000L)
+        }
+
+        beam(input, panel)
+
         val indicesOfSplitters = getIndicesOfSplitters(input)
         return indicesOfSplitters.fold(0L){acc, it ->
             if (input[it.x - 1][it.y] == BEAM) {
@@ -49,6 +61,6 @@ fun main() {
     }
 
     val input = readInputAsStrings("Day07").map{it.splitIgnoreEmpty("").toMutableList()}
-    part1(input).println()
+    part1(input, true).println()
     part2(input).println()
 }
