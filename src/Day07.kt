@@ -33,6 +33,34 @@ fun main() {
         }
     }
 
+    fun getBeamPaths(input: List<MutableList<String>>): List<List<Grid2D.Position>> {
+        val indexOfStart = Grid2D.Position(0, input[0].indexOf(START))
+        val paths = mutableListOf(listOf(indexOfStart))
+        val endedPaths = mutableListOf<List<Grid2D.Position>>()
+        val indicesOfSplitters = getIndicesOfSplitters(input).sortedBy{it.x}
+
+        while(paths.size > 0) {
+            val path = paths.removeAt(0)
+            val nextSplitter = indicesOfSplitters.firstOrNull{it.y == path.last().y && it.x > path.last().x}
+
+            // End path if there isn't a next splitter
+            if (nextSplitter == null) {
+                endedPaths.add(path)
+                continue
+            }
+
+            // Add left and right  if there is a next splitter
+            val leftPath = path.toList() + Grid2D.Position(nextSplitter.x + 1, nextSplitter.y - 1)
+            val rightPath = path.toList() + Grid2D.Position(nextSplitter.x + 1, nextSplitter.y + 1)
+            paths.add(leftPath)
+            paths.add(rightPath)
+            paths.sortedBy{it.last().y}
+            println(paths.size)
+        }
+
+        return endedPaths
+    }
+
     fun part1(input: List<MutableList<String>>, visualize: Boolean = false): Long {
         val panel = if (visualize) BeamPanel(input) else null
         if (panel != null) {
@@ -57,10 +85,10 @@ fun main() {
     }
 
     fun part2(input: List<MutableList<String>>): Long {
-        return 0
+        return getBeamPaths(input).size.toLong()
     }
 
     val input = readInputAsStrings("Day07").map{it.splitIgnoreEmpty("").toMutableList()}
-    part1(input, true).println()
+    part1(input).println()
     part2(input).println()
 }
