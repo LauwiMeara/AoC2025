@@ -2,8 +2,6 @@ const val START = "S"
 const val SPLITTER = "^"
 const val BEAM = "|"
 
-data class Node(val position: Grid2D.Position, val nextNodes: List<Grid2D.Position>)
-
 fun main() {
     fun getIndicesOfSplitters(input: List<List<String>>): List<Grid2D.Position> {
         return input.flatMapIndexed { indexX, it ->
