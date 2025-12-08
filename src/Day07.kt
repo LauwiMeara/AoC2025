@@ -2,6 +2,8 @@ const val START = "S"
 const val SPLITTER = "^"
 const val BEAM = "|"
 
+data class Node(val position: Grid2D.Position, val nextNodes: List<Grid2D.Position>)
+
 fun main() {
     fun getIndicesOfSplitters(input: List<List<String>>): List<Grid2D.Position> {
         return input.flatMapIndexed { indexX, it ->
@@ -33,32 +35,54 @@ fun main() {
         }
     }
 
-    fun getBeamPaths(input: List<MutableList<String>>): List<List<Grid2D.Position>> {
-        val indexOfStart = Grid2D.Position(0, input[0].indexOf(START))
-        val paths = mutableListOf(listOf(indexOfStart))
-        val endedPaths = mutableListOf<List<Grid2D.Position>>()
-        val indicesOfSplitters = getIndicesOfSplitters(input).sortedBy{it.x}
+    fun getGraph(input: List<MutableList<String>>): Map<Grid2D.Position, List<Grid2D.Position>> {
+        val indicesOfSplitters = getIndicesOfSplitters(input).sortedBy { it.x }
+        val graph = mutableMapOf<Grid2D.Position, List<Grid2D.Position>>()
+        for (index in indicesOfSplitters) {
+            val nextSplitters = mutableListOf<Grid2D.Position>()
+            val nextLeftSplitter = indicesOfSplitters.firstOrNull { it.y == index.y - 1 && it.x > index.x }
+            if (nextLeftSplitter != null) nextSplitters.add(nextLeftSplitter)
+            val nextRightSplitter = indicesOfSplitters.firstOrNull { it.y == index.y + 1 && it.x > index.x }
+            if (nextRightSplitter != null) nextSplitters.add(nextRightSplitter)
+            graph[index] = nextSplitters
+        }
+        return graph
+    }
 
-        while(paths.size > 0) {
-            val path = paths.removeAt(0)
-            val nextSplitter = indicesOfSplitters.firstOrNull{it.y == path.last().y && it.x > path.last().x}
+    fun getPaths(
+        graph: Map<Grid2D.Position, List<Grid2D.Position>>): MutableList<List<Grid2D.Position>> {
+        val startSplitter = graph.minBy { it.key.x }.key
+        val pathsInProgress = mutableListOf(listOf(startSplitter))
+        val pathsWithEnds = mutableListOf<List<Grid2D.Position>>()
 
-            // End path if there isn't a next splitter
-            if (nextSplitter == null) {
-                endedPaths.add(path)
+        while (true) {
+            println("In progress: ${pathsInProgress.size}, ended: ${pathsWithEnds.size}")
+            // If all paths have reached the end (no next splitters), stop searching.
+            if (pathsInProgress.isEmpty()) break
+
+            // Get path that hasn't reached the end yet.
+            val currentPath = pathsInProgress.first().toMutableList()
+            pathsInProgress.removeAt(0)
+
+            val lastSplitter = currentPath.last()
+            val nextSplitters = graph[lastSplitter] ?: break
+            if (nextSplitters.isEmpty()) {
+                // Add the path twice, as there will be two paths after the last splitter and both will reach the end.
+                pathsWithEnds.add(currentPath)
+                pathsWithEnds.add(currentPath)
                 continue
             }
-
-            // Add left and right  if there is a next splitter
-            val leftPath = path.toList() + Grid2D.Position(nextSplitter.x + 1, nextSplitter.y - 1)
-            val rightPath = path.toList() + Grid2D.Position(nextSplitter.x + 1, nextSplitter.y + 1)
-            paths.add(leftPath)
-            paths.add(rightPath)
-            paths.sortedBy{it.last().y}
-            println(paths.size)
+            if (nextSplitters.size == 1) {
+                // Add the path once, as one path will reach another splitter and one path will reach the end.
+                pathsWithEnds.add(currentPath)
+            }
+            for (nextSplitter in nextSplitters) {
+                // Update the path with the next splitter.
+                val newPath = currentPath + nextSplitter
+                pathsInProgress.add(newPath)
+            }
         }
-
-        return endedPaths
+        return pathsWithEnds
     }
 
     fun part1(input: List<MutableList<String>>, visualize: Boolean = false): Long {
@@ -85,7 +109,9 @@ fun main() {
     }
 
     fun part2(input: List<MutableList<String>>): Long {
-        return getBeamPaths(input).size.toLong()
+        val graph = getGraph(input)
+        val paths = getPaths(graph)
+        return paths.size.toLong()
     }
 
     val input = readInputAsStrings("Day07").map{it.splitIgnoreEmpty("").toMutableList()}
