@@ -85,3 +85,8 @@ fun List<String>.toListOfLongRange(delimiter: String = "-"): List<LongRange> {
         firstNumber.rangeTo(lastNumber)
     }
 }
+
+/**
+ * Squares an int, returns a long.
+ */
+fun Int.square(): Long = this.toLong() * this
