@@ -47,40 +47,31 @@ fun main() {
         return graph
     }
 
-    fun getPaths(
-        graph: Map<Grid2D.Position, List<Grid2D.Position>>): MutableList<List<Grid2D.Position>> {
-        val startSplitter = graph.minBy { it.key.x }.key
-        val pathsInProgress = mutableListOf(listOf(startSplitter))
-        val pathsWithEnds = mutableListOf<List<Grid2D.Position>>()
+    fun getNumberOfPaths(graph: Map<Grid2D.Position, List<Grid2D.Position>>, start: Grid2D.Position, knownPathsFromSplitter: MutableMap<Grid2D.Position, Long>): Long {
+        if (knownPathsFromSplitter[start] != null) return knownPathsFromSplitter[start]!!
 
-        while (true) {
-            println("In progress: ${pathsInProgress.size}, ended: ${pathsWithEnds.size}")
-            // If all paths have reached the end (no next splitters), stop searching.
-            if (pathsInProgress.isEmpty()) break
+        val numberOfPaths: Long
+        val nextSplitters = graph[start]
 
-            // Get path that hasn't reached the end yet.
-            val currentPath = pathsInProgress.first().toMutableList()
-            pathsInProgress.removeAt(0)
-
-            val lastSplitter = currentPath.last()
-            val nextSplitters = graph[lastSplitter] ?: break
-            if (nextSplitters.isEmpty()) {
-                // Add the path twice, as there will be two paths after the last splitter and both will reach the end.
-                pathsWithEnds.add(currentPath)
-                pathsWithEnds.add(currentPath)
-                continue
+        when (nextSplitters?.size) {
+            0 -> {
+                // This is the last splitter. As the path will be split, add 2.
+                numberOfPaths = 2L
             }
-            if (nextSplitters.size == 1) {
-                // Add the path once, as one path will reach another splitter and one path will reach the end.
-                pathsWithEnds.add(currentPath)
+            1 -> {
+                // The splitter has 1 nextSplitter and 1 end. Calculate the rest of the path and add 1 for the ended path.
+                numberOfPaths = 1 + getNumberOfPaths(graph, nextSplitters.first(), knownPathsFromSplitter)
             }
-            for (nextSplitter in nextSplitters) {
-                // Update the path with the next splitter.
-                val newPath = currentPath + nextSplitter
-                pathsInProgress.add(newPath)
+            else -> {
+                // The splitter has 2 nextSplitters. Calculate the rest of the path for both.
+                val leftSplitter = nextSplitters?.firstOrNull { it.y < start.y }
+                val rightSplitter = nextSplitters?.firstOrNull { it.y > start.y }
+                numberOfPaths = getNumberOfPaths(graph, leftSplitter!!, knownPathsFromSplitter) + getNumberOfPaths(graph, rightSplitter!!, knownPathsFromSplitter)
             }
         }
-        return pathsWithEnds
+
+        knownPathsFromSplitter[start] = numberOfPaths
+        return numberOfPaths
     }
 
     fun part1(input: List<MutableList<String>>, visualize: Boolean = false): Long {
@@ -108,8 +99,8 @@ fun main() {
 
     fun part2(input: List<MutableList<String>>): Long {
         val graph = getGraph(input)
-        val paths = getPaths(graph)
-        return paths.size.toLong()
+        val knownPathsFromSplitter = mutableMapOf<Grid2D.Position, Long>()
+        return getNumberOfPaths(graph, graph.keys.minBy{it.x}, knownPathsFromSplitter)
     }
 
     val input = readInputAsStrings("Day07").map{it.splitIgnoreEmpty("").toMutableList()}
