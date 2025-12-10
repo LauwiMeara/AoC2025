@@ -17,10 +17,6 @@ fun main() {
         return distances
     }
 
-    fun part1(input: List<Grid2D.Position>): Long {
-        return getRectangleAreas(input).maxOf { it.value }
-    }
-
     fun addToPositionsSet(
         input: List<Grid2D.Position>,
         positionsSet: MutableSet<Grid2D.Position>
@@ -39,6 +35,10 @@ fun main() {
                 positionsSet.add(Grid2D.Position(x, yWithXRange.first))
             }
         }
+    }
+
+    fun part1(input: List<Grid2D.Position>): Long {
+        return getRectangleAreas(input).maxOf { it.value }
     }
 
     fun part2(input: List<Grid2D.Position>): Long {
