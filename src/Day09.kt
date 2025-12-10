@@ -44,7 +44,6 @@ fun main() {
     fun part2(input: List<Grid2D.Position>): Long {
         val positionsSet = mutableSetOf<Grid2D.Position>()
         addToPositionsSet(input, positionsSet) // add outline
-        addToPositionsSet(positionsSet.toList(), positionsSet) // fill shape
 
         val areas = getRectangleAreas(input).toList().sortedByDescending { it.second }
         for (area in areas) {
@@ -52,19 +51,35 @@ fun main() {
             val maxX = area.first.toList().maxOf{it.x}
             val minY = area.first.toList().minOf{it.y}
             val maxY = area.first.toList().maxOf{it.y}
-            var areaIsOutsideOfTiles = false
-            for (x in minX..maxX) {
-                if (areaIsOutsideOfTiles) break
+            var areaOutsideOfTiles = false
 
-                for (y in minY..maxY) {
-                    if (!positionsSet.contains(Grid2D.Position(x, y))) {
-                        areaIsOutsideOfTiles = true
-                        break
-                    }
+            val yRangesForX = positionsSet
+                .groupBy { it.x }
+                .map{it.key to Pair(it.value.minOf{position -> position.y}, it.value.maxOf{position -> position.y})}
+                .toMap()
+
+            for (x in minX..maxX) {
+                if (yRangesForX[x] == null || minY < yRangesForX[x]!!.first || maxY > yRangesForX[x]!!.second) {
+                    areaOutsideOfTiles = true
+                    break
                 }
+
             }
 
-            if (!areaIsOutsideOfTiles) {
+            val xRangesForY = positionsSet
+                .groupBy{it.y}
+                .map{it.key to Pair(it.value.minOf{position -> position.x}, it.value.maxOf{position -> position.x})}
+                .toMap()
+
+            for (y in minY..maxY) {
+                if (xRangesForY[y] == null || minX < xRangesForY[y]!!.first || maxX > xRangesForY[y]!!.second) {
+                    areaOutsideOfTiles = true
+                    break
+                }
+
+            }
+
+            if (!areaOutsideOfTiles) {
                 return area.second
             }
         }
