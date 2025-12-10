@@ -1,9 +1,10 @@
 data class Machine(val diagram: Map<Int, Boolean>, val buttons: List<List<Int>>, val joltageRequirements: List<Int>)
 data class LightPath(val lights: Map<Int, Boolean>, val numberOfPressedButtons: Int)
-data class JoltagePath(val joltages: List<Int>, val numberOfPressedButtons: Int)
+data class JoltagePath(val joltages: List<Int>, val numberOfPressedButtons: Int, val estimatedCost: Int)
 const val ON = '#'
 
 fun main() {
+    // Dijkstra
     fun getMinNumberOfPressedButtons(
         possiblePaths: MutableList<LightPath>,
         machine: Machine
@@ -49,13 +50,13 @@ fun main() {
         return getMinNumberOfPressedButtons(possiblePaths, machine)
     }
 
+    // A*
     fun getMinNumberOfPressedButtonsForJoltages(
         possiblePaths: MutableList<JoltagePath>,
         machine: Machine
     ): Int {
         // Find the path with the lowest cost (number of pressed buttons)
-        val minCost = possiblePaths.minOf{it.numberOfPressedButtons}
-        val currentPath = possiblePaths.first { it.numberOfPressedButtons == minCost }
+        val currentPath = possiblePaths.minBy{it.estimatedCost + it.numberOfPressedButtons}
         possiblePaths.remove(currentPath)
 
         // Find out which joltages should be triggered and which buttons could do that.
@@ -76,6 +77,7 @@ fun main() {
                 }
             }
             val newCost = currentPath.numberOfPressedButtons + 1
+            val newEstimatedCost = currentPath.estimatedCost - button.size
 
             // If any of the joltage counters is higher than the joltage requirement, don't add the new path.
             if (newJoltages.mapIndexed { index, it -> it > machine.joltageRequirements[index]}.any{ it }) {
@@ -89,6 +91,10 @@ fun main() {
                 if (presentPathsWithSameJoltages.any{it.numberOfPressedButtons <= newCost}) {
                     continue
                 }
+                // Greedy algorithm
+                if (presentPathsWithSameJoltages.any{it.numberOfPressedButtons + it.estimatedCost <= newCost + newEstimatedCost}) {
+                    continue
+                }
                 possiblePaths.removeAll(presentPathsWithSameJoltages)
             }
 
@@ -98,7 +104,7 @@ fun main() {
             }
 
             // Else, add the path to the list of possible paths.
-            possiblePaths.add(JoltagePath(newJoltages, newCost))
+            possiblePaths.add(JoltagePath(newJoltages, newCost, newEstimatedCost))
         }
 
         return getMinNumberOfPressedButtonsForJoltages(possiblePaths, machine)
@@ -120,7 +126,8 @@ fun main() {
         for (machine in input) {
             val possiblePaths = mutableListOf<JoltagePath>()
             val startJoltages = MutableList(machine.joltageRequirements.size) { 0 }
-            possiblePaths.add(JoltagePath(startJoltages, 0))
+            val estimatedCost = machine.joltageRequirements.reduce {acc, it -> acc + it}
+            possiblePaths.add(JoltagePath(startJoltages, 0, estimatedCost))
             sum += getMinNumberOfPressedButtonsForJoltages(possiblePaths, machine)
         }
         return sum
