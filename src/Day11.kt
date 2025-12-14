@@ -1,7 +1,3 @@
-import java.util.*
-
-data class Path(val nodes: List<String>, val visited: Set<String>)
-
 const val START_SERVER_PART_1 = "you"
 const val START_SERVER_PART_2 = "svr"
 const val DAC_SERVER = "dac"
@@ -9,52 +5,41 @@ const val FFT_SERVER = "fft"
 const val END_SERVER = "out"
 
 fun main() {
-    fun getPaths(input: Map<String, List<String>>, start: String, end: String): List<List<String>> {
-        val paths = PriorityQueue<Path>(
-            compareBy { it.nodes.size }
-        )
-        paths.add(Path(nodes = listOf(start), visited = setOf(start)))
-        val endedPaths = mutableListOf<List<String>>()
 
-        while (paths.size != 0) {
-            val currentPath = paths.poll()
+    // Depth first search
+    fun getNumberOfPaths(
+        input: Map<String, List<String>>,
+        start: String,
+        end: String,
+        memory: MutableMap<String, Long> = mutableMapOf()
+    ): Long {
+        // If the end is found, count the path
+        if (start == end) return 1L
 
-            val nextServers = input[currentPath.nodes.last()] ?: emptyList()
-            for (nextServer in nextServers) {
-                // Don't circle through the paths.
-                if (nextServer in currentPath.visited) continue
-                // Add to endedPaths if the end is reached.
-                if (nextServer == end) {
-                    endedPaths.add(currentPath.nodes + end)
-                    continue
-                }
-                // Add the next server to the path.
-                paths.add(Path(nodes = currentPath.nodes + nextServer, visited = currentPath.visited + nextServer))
-            }
+        // Look for the start in memory.
+        // If there is a start memorized, use the counted number of paths.
+        // If there isn't a start memorized, count the number of paths to the end and memorize it.
+        // If start can't be found in input, there is no path to the end.
+        return memory.getOrPut(start) {
+            input[start]?.sumOf { next ->
+                getNumberOfPaths(input, next, end, memory)
+            } ?: 0
         }
-
-        return endedPaths
     }
 
     fun part1(input: Map<String, List<String>>): Long {
-        return getPaths(input, START_SERVER_PART_1, END_SERVER).size.toLong()
+        return getNumberOfPaths(input, START_SERVER_PART_1, END_SERVER)
     }
 
     fun part2(input: Map<String, List<String>>): Long {
         // The possible paths are svr -> dac -> fft -> out and svr -> fft -> dac -> out.
         // So the answer is the possible paths between (svr -> dac * dac -> fft * fft -> out) + (svr -> fft * fft -> dac * dac -> out)
-        val pathsSvrToDac = getPaths(input, START_SERVER_PART_2, DAC_SERVER).size.toLong()
-        println(pathsSvrToDac)
-        val pathsDacToFft = getPaths(input, DAC_SERVER, FFT_SERVER).size
-        println(pathsDacToFft)
-        val pathsFftToOut = getPaths(input, FFT_SERVER, END_SERVER).size
-        println(pathsFftToOut)
-        val pathsSvrToFft = getPaths(input, START_SERVER_PART_2, FFT_SERVER).size.toLong()
-        println(pathsSvrToFft)
-        val pathsFftToDac = getPaths(input, FFT_SERVER, DAC_SERVER).size
-        println(pathsFftToDac)
-        val pathsDacToOut = getPaths(input, DAC_SERVER, END_SERVER).size
-        println(pathsDacToOut)
+        val pathsSvrToDac = getNumberOfPaths(input, START_SERVER_PART_2, DAC_SERVER)
+        val pathsDacToFft = getNumberOfPaths(input, DAC_SERVER, FFT_SERVER)
+        val pathsFftToOut = getNumberOfPaths(input, FFT_SERVER, END_SERVER)
+        val pathsSvrToFft = getNumberOfPaths(input, START_SERVER_PART_2, FFT_SERVER)
+        val pathsFftToDac = getNumberOfPaths(input, FFT_SERVER, DAC_SERVER)
+        val pathsDacToOut = getNumberOfPaths(input, DAC_SERVER, END_SERVER)
         return (pathsSvrToDac * pathsDacToFft * pathsFftToOut) + (pathsSvrToFft * pathsFftToDac * pathsDacToOut)
     }
 
